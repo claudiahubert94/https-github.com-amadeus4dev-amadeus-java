@@ -98,7 +98,7 @@ public class FlightOffersSearch {
    * </p>
    *
    * <pre>
-   * amadeus.shopping.flightOffers.prediction.post(body);</pre>
+   * amadeus.shopping.flightOffersSearch.post(body);</pre>
    *
    * @param body the parameters to send to the API as a String
    * @return an API resource

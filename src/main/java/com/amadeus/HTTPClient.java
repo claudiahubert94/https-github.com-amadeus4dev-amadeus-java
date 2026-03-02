@@ -188,7 +188,7 @@ public class HTTPClient {
    * @return a Response object containing the status code, body, and parsed data.
    */
   public Response post(String path, JsonObject body) throws ResponseException {
-    return request(HttpVerbs.POST, path, null, body.toString());
+    return request(HttpVerbs.POST, path, null, body != null ? body.toString() : null);
   }
 
   /**
@@ -212,7 +212,7 @@ public class HTTPClient {
    * @return a Response object containing the status code, body, and parsed data.
    */
   public Response post(String path, Params params, JsonObject body) throws ResponseException {
-    return request(HttpVerbs.POST, path, params, body.toString());
+    return request(HttpVerbs.POST, path, params, body != null ? body.toString() : null);
   }
 
   /**
@@ -347,7 +347,7 @@ public class HTTPClient {
 
   // A simple log that only triggers if we are in debug mode
   private void log(Object object) {
-    if (getConfiguration().getLogLevel() == "debug") {
+    if ("debug".equals(getConfiguration().getLogLevel())) {
       Logger logger = getConfiguration().getLogger();
       logger.info(object.toString());
     }

@@ -70,7 +70,7 @@ public class HotelOrders {
   /**
    * Convenience method for calling <code>post</code> without any parameters.
    *
-   * @see HotelBookings#post()
+   * @see HotelOrders#post(String)
    */
   public HotelOrder post() throws ResponseException {
     return post((String) null);
