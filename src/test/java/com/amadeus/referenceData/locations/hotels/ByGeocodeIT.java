@@ -81,9 +81,8 @@ public class ByGeocodeIT {
     assertNotEquals(0, result.length);
   }
 
-  //TODO Review with the team to upgrade the behaviour.
   @Test
-  public void givenClientWhenCallHotelsByGeocodeWithoutParamsThenOK()
+  public void givenClientWhenCallHotelsByGeocodeWithoutParamsThenThrowsClientException()
       throws ResponseException {
 
     // Given

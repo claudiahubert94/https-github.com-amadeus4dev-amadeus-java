@@ -85,9 +85,8 @@ public class HotelOffersSearchIT {
     assertNotEquals(0, result.length);
   }
 
-  //TODO Review with the team to upgrade the behaviour.
   @Test
-  public void givenClientWhenCallHotelOffersSearchWithoutParamsThenOK()
+  public void givenClientWhenCallHotelOffersSearchWithoutParamsThenThrowsClientException()
       throws ResponseException {
 
     // Given

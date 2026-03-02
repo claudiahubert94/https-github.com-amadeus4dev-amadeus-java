@@ -30,7 +30,7 @@ public class ResponseException extends Exception {
    * @hides as only used internally
    */
   public void log(Configuration configuration) {
-    if (configuration.getLogLevel() == "warn") {
+    if ("warn".equals(configuration.getLogLevel())) {
       String warning = String.format("Amadeus %s %s", code, description);
       configuration.getLogger().warning(warning);
     }
