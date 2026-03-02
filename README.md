@@ -7,7 +7,7 @@ Amadeus provides a rich set of APIs for the travel industry. For more details, c
 
 ## Installation
 
-This library requires Java 1.7+ and the [Gson library](https://github.com/google/gson). You can install the SDK via Maven or Gradle:
+This library requires Java 21+ and the [Gson library](https://github.com/google/gson). You can install the SDK via Maven or Gradle:
 
 #### Maven
 ```xml

@@ -86,7 +86,7 @@ GitHub Actions will now build the library and release it to Maven Central.
 
 #### **Do you want to contribute to the documentation?**
 
-Excellent, to get start developing this library ensure you have Java 7+ installed and clone the repository.
+Excellent, to get start developing this library ensure you have Java 21+ installed and clone the repository.
 
 Then, you should be able to create the docs.
 

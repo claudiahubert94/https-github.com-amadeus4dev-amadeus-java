@@ -1,4 +1,8 @@
 # Changelog
+10.1.0 - 2026-03-02
+--------------------
+Library compilation upgrade to Java 21
+
 10.0.0 - 2024-10-07
 --------------------
 Decommissioned Trip Parser API
