@@ -217,7 +217,7 @@
             <property name="allowedAnnotations" value="Override, Test, Before"/>
         </module>
         <module name="MissingJavadocMethod">
-            <property name="accessModifiers" value="public"/>
+            <property name="scope" value="public"/>
             <property name="minLineCount" value="2"/>
             <property name="allowedAnnotations" value="Override, Test, Before"/>
         </module>
