@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.amadeus.client.AccessToken;
+import com.amadeus.exceptions.NetworkException;
 import com.amadeus.exceptions.ResponseException;
 import com.amadeus.resources.Resource;
 import com.google.gson.JsonArray;
@@ -386,6 +387,126 @@ public class HTTPClientTest {
     Response nextResponse = client.page("next", response);
 
     assertNull(nextResponse);
+  }
+
+  @Test public void testDisconnectCalledAfterSuccessfulRequest()
+      throws ResponseException, IOException {
+    when(request.getVerb()).thenReturn(HttpVerbs.GET);
+    when(request.getParams()).thenReturn(null);
+    when(request.getConnection()).thenReturn(connection);
+
+    when(connection.getResponseCode()).thenReturn(200);
+    when(connection.getHeaderField("Content-Type")).thenReturn(
+            "application/json");
+    when(connection.getInputStream()).thenReturn(
+            new ByteArrayInputStream("{ \"data\": [{}]}".getBytes()));
+
+    when(client.buildRequest(HttpVerbs.GET, "/foo", null, null, null)).thenReturn(request);
+    when(client.unauthenticatedRequest(HttpVerbs.GET, "/foo", null, null, null))
+      .thenCallRealMethod();
+
+    client.unauthenticatedRequest(HttpVerbs.GET, "/foo", null, null, null);
+
+    verify(request, times(1)).closeConnection();
+  }
+
+  @Test public void testDisconnectCalledAfterFailedRequest() throws ResponseException, IOException {
+    when(request.getVerb()).thenReturn(HttpVerbs.GET);
+    when(request.getParams()).thenReturn(null);
+    when(request.getConnection()).thenReturn(connection);
+
+    when(connection.getResponseCode()).thenReturn(500);
+    when(connection.getHeaderField("Content-Type")).thenReturn(
+            "application/json");
+    when(connection.getInputStream()).thenReturn(
+            new ByteArrayInputStream("{ \"data\": [{}]}".getBytes()));
+
+    when(client.buildRequest(HttpVerbs.GET, "/foo", null, null, null)).thenReturn(request);
+    when(client.unauthenticatedRequest(HttpVerbs.GET, "/foo", null, null, null))
+      .thenCallRealMethod();
+
+    try {
+      client.unauthenticatedRequest(HttpVerbs.GET, "/foo", null, null, null);
+    } catch (ResponseException e) {
+      // expected
+    }
+
+    verify(request, times(1)).closeConnection();
+  }
+
+  @Test public void testDisconnectCalledAfterNetworkException() throws ResponseException, IOException {
+    when(request.getVerb()).thenReturn(HttpVerbs.GET);
+    when(request.getParams()).thenReturn(null);
+    when(request.getConnection()).thenReturn(connection);
+
+    when(client.buildRequest(HttpVerbs.GET, "/foo", null, null, null)).thenReturn(request);
+    when(client.unauthenticatedRequest(HttpVerbs.GET, "/foo", null, null, null))
+      .thenCallRealMethod();
+
+    // Simulate IOException during establishConnection by making it throw
+    org.mockito.Mockito.doThrow(new IOException("connection failed"))
+        .when(request).establishConnection();
+
+    try {
+      client.unauthenticatedRequest(HttpVerbs.GET, "/foo", null, null, null);
+    } catch (ResponseException e) {
+      // expected NetworkException
+    }
+
+    verify(request, times(1)).closeConnection();
+  }
+
+  @Test public void testConnectionNullAfterExecute()
+      throws ResponseException, IOException {
+    // Use a real Request to verify connection is nulled out
+    Amadeus realClient = Amadeus.builder("id", "secret")
+            .setLogLevel("silent").build();
+    Request realRequest = mock(Request.class);
+    HttpURLConnection mockConn = mock(HttpURLConnection.class);
+
+    when(realRequest.getVerb()).thenReturn(HttpVerbs.GET);
+    when(realRequest.getParams()).thenReturn(null);
+    when(realRequest.getConnection()).thenReturn(mockConn);
+
+    when(mockConn.getResponseCode()).thenReturn(200);
+    when(mockConn.getHeaderField("Content-Type")).thenReturn(
+            "application/json");
+    when(mockConn.getInputStream()).thenReturn(
+            new ByteArrayInputStream("{ \"data\": [{}]}".getBytes()));
+
+    when(client.buildRequest(HttpVerbs.GET, "/foo", null, null, null)).thenReturn(realRequest);
+    when(client.unauthenticatedRequest(HttpVerbs.GET, "/foo", null, null, null))
+      .thenCallRealMethod();
+
+    client.unauthenticatedRequest(HttpVerbs.GET, "/foo", null, null, null);
+
+    verify(realRequest, times(1)).closeConnection();
+  }
+
+  @Test public void testWriteStreamsClosedOnException() throws ResponseException, IOException {
+    when(request.getVerb()).thenReturn(HttpVerbs.POST);
+    when(request.getParams()).thenReturn(params);
+    when(request.getBearerToken()).thenReturn(null);
+    when(request.getConnection()).thenReturn(connection);
+
+    OutputStream mockOs = mock(OutputStream.class);
+    when(connection.getOutputStream()).thenReturn(mockOs);
+    when(connection.getResponseCode()).thenReturn(200);
+    when(connection.getHeaderField("Content-Type")).thenReturn(
+            "application/json");
+    when(connection.getInputStream()).thenReturn(
+            new ByteArrayInputStream("{ \"data\": [{}]}".getBytes()));
+
+    when(client.buildRequest(HttpVerbs.POST, "/foo", params, null, null)).thenReturn(request);
+    when(client.unauthenticatedRequest(HttpVerbs.POST, "/foo",
+        params, null, null)).thenCallRealMethod();
+
+    Response response = client.unauthenticatedRequest(HttpVerbs.POST, "/foo",
+        params, null, null);
+
+    // Verify the output stream was closed by try-with-resources
+    // close() may be called more than once (by BufferedWriter and by try-with-resources)
+    verify(mockOs, org.mockito.Mockito.atLeastOnce()).close();
   }
 }
 

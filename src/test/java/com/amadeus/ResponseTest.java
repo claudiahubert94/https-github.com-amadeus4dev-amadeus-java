@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.amadeus.exceptions.AuthenticationException;
@@ -235,6 +236,49 @@ public class ResponseTest {
             new ByteArrayInputStream("{}".getBytes()));
     response.parse(client);
     response.detectError(client);
+  }
+
+  @Test public void testReadBodyClosesStreamsOnSuccess() throws IOException {
+    InputStream mockStream = mock(InputStream.class);
+    when(connection.getInputStream()).thenReturn(mockStream);
+    when(connection.getResponseCode()).thenReturn(200);
+    when(connection.getHeaderField("Content-Type")).thenReturn(
+            "application/json");
+    when(mockStream.read(org.mockito.ArgumentMatchers.any(byte[].class),
+        org.mockito.ArgumentMatchers.anyInt(),
+        org.mockito.ArgumentMatchers.anyInt())).thenReturn(-1);
+
+    response.parse(client);
+
+    // Stream should be closed by try-with-resources
+    verify(mockStream).close();
+  }
+
+  @Test public void testReadBodyClosesStreamsOnError() throws IOException {
+    InputStream mockStream = mock(InputStream.class);
+    when(connection.getInputStream()).thenThrow(new IOException());
+    when(connection.getErrorStream()).thenReturn(mockStream);
+    when(connection.getResponseCode()).thenReturn(400);
+    when(connection.getHeaderField("Content-Type")).thenReturn(
+            "application/json");
+    when(mockStream.read(org.mockito.ArgumentMatchers.any(byte[].class),
+        org.mockito.ArgumentMatchers.anyInt(),
+        org.mockito.ArgumentMatchers.anyInt())).thenReturn(-1);
+
+    response.parse(client);
+
+    // Stream should be closed by try-with-resources even on error path
+    verify(mockStream).close();
+  }
+
+  @Test public void testReadBodyHandlesNullInputStream() throws IOException {
+    when(connection.getInputStream()).thenThrow(new IOException());
+    when(connection.getErrorStream()).thenReturn(null);
+    when(connection.getResponseCode()).thenReturn(500);
+
+    response.parse(client);
+
+    assertNull(response.getBody());
   }
 
   @Test public void testToString() {
