@@ -125,10 +125,8 @@ public class Response {
 
   // Tries to read the body.
   private String readBody() {
-    // Get the connection
     HttpURLConnection connection = getRequest().getConnection();
 
-    // Try to get the input stream
     InputStream inputStream = null;
     try {
       inputStream = connection.getInputStream();
@@ -136,20 +134,19 @@ public class Response {
       inputStream = connection.getErrorStream();
     }
 
-    // Try to parse the input stream
-    try {
-      InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-      BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-      StringBuffer body = new StringBuffer();
+    if (inputStream == null) {
+      return null;
+    }
+
+    try (InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+         BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
+      StringBuilder body = new StringBuilder();
       String inputLine;
       while ((inputLine = bufferedReader.readLine()) != null) {
         body.append(inputLine);
       }
-      bufferedReader.close();
-      // Return the response body
       return body.toString();
     } catch (IOException e) {
-      // return null if we could not parse the input stream
       return null;
     }
   }

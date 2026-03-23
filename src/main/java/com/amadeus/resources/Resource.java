@@ -11,6 +11,8 @@ import lombok.Getter;
  * A generic resource as returned by all namespaced APIs.
  */
 public class Resource {
+  private static final Gson GSON = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+
   /**
    * The original response that this object is populated from.
    */
@@ -29,12 +31,11 @@ public class Resource {
    * @hide as only used internally
    */
   public static Resource[] fromArray(Response response, Class klass) {
-    Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
     JsonElement responseData = response.getData();
     if (responseData == null) {
       responseData = new JsonArray(0);
     }
-    Resource[] resources = (Resource[]) gson.fromJson(responseData, klass);
+    Resource[] resources = (Resource[]) GSON.fromJson(responseData, klass);
     for (Resource resource : resources) {
       resource.response = response;
       resource.deSerializationClass = klass;
@@ -48,8 +49,7 @@ public class Resource {
    * @hide as only used internally
    */
   public static Resource fromObject(Response response, Class klass) {
-    Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-    Resource resource = (Resource) gson.fromJson(response.getData(), klass);
+    Resource resource = (Resource) GSON.fromJson(response.getData(), klass);
     resource.response = response;
     resource.deSerializationClass = klass;
     return resource;

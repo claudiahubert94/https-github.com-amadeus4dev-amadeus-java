@@ -4,8 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import org.junit.jupiter.api.Test;
 
 public class RequestTest {
@@ -117,5 +120,26 @@ public class RequestTest {
       Request request = new Request(HttpVerbs.POST, path, null, null,"token", amadeus);
       assertEquals(request.getHeaders().get(Constants.X_HTTP_METHOD_OVERRIDE), "GET");
     }
+  }
+
+  @Test public void testCloseConnectionDisconnectsAndNulls() throws IOException {
+    Amadeus amadeus = Amadeus.builder("123", "234").build();
+    Request request = new Request(HttpVerbs.POST, "/v1/security/oauth2/token", null, null, null,
+        amadeus);
+    request.establishConnection();
+    assertNotNull(request.getConnection());
+
+    request.closeConnection();
+    assertNull(request.getConnection());
+  }
+
+  @Test public void testCloseConnectionWhenAlreadyNull() {
+    Amadeus amadeus = Amadeus.builder("123", "234").build();
+    Request request = new Request(HttpVerbs.GET, "/foo/bar", null, null, null, amadeus);
+    assertNull(request.getConnection());
+
+    // Should not throw when connection is already null
+    request.closeConnection();
+    assertNull(request.getConnection());
   }
 }

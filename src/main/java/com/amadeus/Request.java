@@ -159,6 +159,17 @@ public class Request {
     return userAgent;
   }
 
+  /**
+   * Disconnects the underlying HttpURLConnection and nulls the reference
+   * so the connection can be garbage collected.
+   */
+  protected void closeConnection() {
+    if (this.connection != null) {
+      this.connection.disconnect();
+      this.connection = null;
+    }
+  }
+
   // Gets the serialized params, only if this is a Get call
   private String getQueryParams() {
     if (params != null) {

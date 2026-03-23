@@ -355,11 +355,15 @@ public class HTTPClient {
 
   // Executes a request and return a Response
   private Response execute(Request request) throws ResponseException {
-    Response response = new Response(fetch(request));
-    response.parse(this);
-    log(response);
-    response.detectError(this);
-    return response;
+    try {
+      Response response = new Response(fetch(request));
+      response.parse(this);
+      log(response);
+      response.detectError(this);
+      return response;
+    } finally {
+      request.closeConnection();
+    }
   }
 
 
@@ -376,44 +380,36 @@ public class HTTPClient {
 
   // Writes the parameters to the request.
   private void write(Request request) throws IOException {
-
-    final String encoding = "UTF-8";
-
-    // POST with access token + body + URL parameters
-    if (request.getVerb() == HttpVerbs.POST && request.getParams() != null
-            && request.getBearerToken() != null) {
-      OutputStream os = request.getConnection().getOutputStream();
-      BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, encoding));
-      // writer.write(request.getParams().toQueryString());
-      if (request.getBody() != null) {
-        writer.write(request.getBody());
-      }
-      writer.flush();
-      writer.close();
-      os.close();
+    if (request.getVerb() != HttpVerbs.POST) {
+      return;
     }
 
-    // POST with access without token (authentication call)
-    if (request.getVerb() == HttpVerbs.POST && request.getParams() != null
-            && request.getBearerToken() == null) {
-      OutputStream os = request.getConnection().getOutputStream();
-      BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, encoding));
-      writer.write(request.getParams().toQueryString());
-      writer.flush();
-      writer.close();
-      os.close();
+    String content = null;
+    boolean shouldWrite = false;
+
+    if (request.getParams() != null && request.getBearerToken() != null) {
+      // POST with access token + body + URL parameters
+      content = request.getBody();
+      shouldWrite = true;
+    } else if (request.getParams() != null && request.getBearerToken() == null) {
+      // POST without token (authentication call)
+      content = request.getParams().toQueryString();
+      shouldWrite = true;
+    } else if (request.getParams() == null) {
+      // POST with access token + body
+      content = request.getBody();
+      shouldWrite = true;
     }
 
-    // POST with access token + body
-    if (request.getVerb() == HttpVerbs.POST && request.getParams() == null) {
-      OutputStream os = request.getConnection().getOutputStream();
-      BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, encoding));
-      if (request.getBody() != null) {
-        writer.write(request.getBody());
+    if (shouldWrite) {
+      try (OutputStream os = request.getConnection().getOutputStream();
+           BufferedWriter writer = new BufferedWriter(
+               new OutputStreamWriter(os, "UTF-8"))) {
+        if (content != null) {
+          writer.write(content);
+        }
+        writer.flush();
       }
-      writer.flush();
-      writer.close();
-      os.close();
     }
   }
 
